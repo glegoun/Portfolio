@@ -5,4 +5,4 @@
 -AL<ML<DL
 
 ## 포트폴리오 주소
-(https://glegoun.github.io/testRepo/)
+ https://glegoun.github.io/Portfolio/
