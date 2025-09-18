@@ -1,0 +1,692 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>에겐/테토 테스트 💫</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap');
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            25% { background-position: 100% 50%; }
+            50% { background-position: 100% 100%; }
+            75% { background-position: 0% 100%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .test-container {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(25px);
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            padding: 40px;
+            max-width: 700px;
+            width: 100%;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .test-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+            animation: rotate 25s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes rotate {
+            100% { transform: rotate(360deg); }
+        }
+
+        .title {
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(45deg, #ff6b6b, #ffa726, #66bb6a, #42a5f5);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 15px;
+            animation: titleGlow 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes titleGlow {
+            from { filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3)); }
+            to { filter: drop-shadow(0 0 20px rgba(255, 255, 255, 0.6)); }
+        }
+
+        .subtitle {
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.2rem;
+            margin-bottom: 30px;
+            font-weight: 300;
+        }
+
+        .start-screen {
+            display: block;
+        }
+
+        .test-screen {
+            display: none;
+        }
+
+        .result-screen {
+            display: none;
+        }
+
+        .start-button, .restart-button {
+            background: linear-gradient(45deg, #ff6b6b, #ffa726);
+            color: white;
+            border: none;
+            padding: 18px 45px;
+            border-radius: 50px;
+            font-size: 1.3rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 15px;
+            box-shadow: 0 15px 30px rgba(255, 107, 107, 0.4);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .start-button:hover, .restart-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(255, 107, 107, 0.5);
+        }
+
+        .progress-container {
+            margin-bottom: 30px;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 500;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            background: rgba(255, 255, 255, 0.3);
+            height: 12px;
+            border-radius: 15px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #00d4ff, #090979, #ff6b6b);
+            background-size: 200% 100%;
+            height: 100%;
+            border-radius: 15px;
+            transition: width 0.6s ease;
+            width: 0%;
+            animation: progressShine 3s ease-in-out infinite;
+        }
+
+        @keyframes progressShine {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .question-container {
+            background: rgba(255, 255, 255, 0.25);
+            border-radius: 25px;
+            padding: 35px;
+            margin-bottom: 35px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            position: relative;
+        }
+
+        .question-container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #ff6b6b, #ffa726, #66bb6a, #42a5f5);
+            border-radius: 25px;
+            z-index: -1;
+            opacity: 0.5;
+        }
+
+        .question {
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: white;
+            margin-bottom: 25px;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+            line-height: 1.4;
+        }
+
+        .options {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .option {
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 18px 25px;
+            border-radius: 20px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            backdrop-filter: blur(10px);
+            text-align: left;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .option::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.6s ease;
+        }
+
+        .option:hover {
+            background: rgba(255, 255, 255, 0.35);
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .option:hover::before {
+            left: 100%;
+        }
+
+        .option.selected {
+            background: rgba(102, 187, 106, 0.8);
+            border-color: #66bb6a;
+            transform: scale(1.02);
+        }
+
+        .next-button {
+            background: linear-gradient(45deg, #66bb6a, #42a5f5);
+            color: white;
+            border: none;
+            padding: 15px 35px;
+            border-radius: 25px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin-top: 25px;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .next-button.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .next-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 187, 106, 0.4);
+        }
+
+        .result-container {
+            padding: 30px;
+            border-radius: 25px;
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .result-container.egen {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+        }
+
+        .result-container.teto {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+        }
+
+        .result-title {
+            font-size: 2.5rem;
+            font-weight: 900;
+            margin-bottom: 15px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .result-subtitle {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            opacity: 0.9;
+        }
+
+        .result-description {
+            font-size: 1.1rem;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-weight: 400;
+        }
+
+        .score-display {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+        }
+
+        .floating-shapes {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .shape {
+            position: absolute;
+            opacity: 0.1;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .shape:nth-child(1) {
+            top: 10%;
+            left: 10%;
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 50%;
+            animation-delay: 0s;
+        }
+
+        .shape:nth-child(2) {
+            top: 20%;
+            right: 15%;
+            width: 40px;
+            height: 40px;
+            background: white;
+            transform: rotate(45deg);
+            animation-delay: 2s;
+        }
+
+        .shape:nth-child(3) {
+            bottom: 15%;
+            left: 20%;
+            width: 50px;
+            height: 50px;
+            background: white;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            33% { transform: translateY(-15px) rotate(10deg); }
+            66% { transform: translateY(10px) rotate(-10deg); }
+        }
+
+        @media (max-width: 768px) {
+            .test-container {
+                padding: 25px;
+                margin: 10px;
+            }
+            
+            .title {
+                font-size: 2.2rem;
+            }
+            
+            .question {
+                font-size: 1.3rem;
+            }
+            
+            .option {
+                padding: 15px 20px;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <div class="floating-shapes">
+            <div class="shape"></div>
+            <div class="shape"></div>
+            <div class="shape"></div>
+        </div>
+        
+        <!-- 시작 화면 -->
+        <div class="start-screen" id="startScreen">
+            <h1 class="title">에겐/테토 테스트</h1>
+            <p class="subtitle">
+                당신은 에스트로겐형(에겐) vs 테스토스테론형(테토) 중 어디에 가까울까요?<br>
+                솔직하게 답변해보세요! 💫
+            </p>
+            <button class="start-button" onclick="startTest()">테스트 시작하기 🚀</button>
+        </div>
+
+        <!-- 테스트 화면 -->
+        <div class="test-screen" id="testScreen">
+            <div class="progress-container">
+                <div class="progress-info">
+                    <span>질문 <span id="currentQ">1</span> / <span id="totalQ">2</span></span>
+                    <span id="progressPercent">0%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressBar"></div>
+                </div>
+            </div>
+            
+            <div class="question-container">
+                <div class="question" id="question"></div>
+                <div class="options" id="options"></div>
+            </div>
+            
+            <button class="next-button" id="nextButton" onclick="nextQuestion()">다음 질문</button>
+        </div>
+
+        <!-- 결과 화면 -->
+        <div class="result-screen" id="resultScreen">
+            <div class="result-container" id="resultContainer">
+                <div class="result-title" id="resultTitle"></div>
+                <div class="result-subtitle" id="resultSubtitle"></div>
+                <div class="result-description" id="resultDescription"></div>
+                <div class="score-display" id="scoreDisplay"></div>
+            </div>
+            <button class="restart-button" onclick="restartTest()">다시 테스트하기 ✨</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                question: "감정이 풍부하고 감정을 표현하는 편이다.",
+                options: [
+                    { text: "매우 그렇다", score: { egen: 2, teto: 0 } },
+                    { text: "그렇다", score: { egen: 1, teto: 0 } },
+                    { text: "보통이다", score: { egen: 0, teto: 0 } },
+                    { text: "그렇지 않다", score: { egen: 0, teto: 1 } },
+                    { text: "전혀 그렇지 않다", score: { egen: 0, teto: 2 } }
+                ]
+            },
+            {
+                question: "관계에서 주로 수동적인 편이다.",
+                options: [
+                    { text: "매우 그렇다", score: { egen: 2, teto: 0 } },
+                    { text: "그렇다", score: { egen: 1, teto: 0 } },
+                    { text: "보통이다", score: { egen: 0, teto: 0 } },
+                    { text: "그렇지 않다", score: { egen: 0, teto: 1 } },
+                    { text: "전혀 그렇지 않다", score: { egen: 0, teto: 2 } }
+                ]
+            },
+            {
+                question: "새로운 사람들과 쉽게 친해지고 사교적이다.",
+                options: [
+                    { text: "매우 그렇다", score: { egen: 1, teto: 1 } },
+                    { text: "그렇다", score: { egen: 1, teto: 0 } },
+                    { text: "보통이다", score: { egen: 0, teto: 0 } },
+                    { text: "그렇지 않다", score: { egen: 0, teto: 1 } },
+                    { text: "전혀 그렇지 않다", score: { egen: 0, teto: 2 } }
+                ]
+            },
+            {
+                question: "SNS를 자주 사용하고 일상을 많이 공유한다.",
+                options: [
+                    { text: "매우 그렇다", score: { egen: 2, teto: 0 } },
+                    { text: "그렇다", score: { egen: 1, teto: 0 } },
+                    { text: "보통이다", score: { egen: 0, teto: 0 } },
+                    { text: "그렇지 않다", score: { egen: 0, teto: 1 } },
+                    { text: "전혀 그렇지 않다", score: { egen: 0, teto: 2 } }
+                ]
+            },
+            {
+                question: "운동이나 스포츠 활동을 즐기는 편이다.",
+                options: [
+                    { text: "매우 그렇다", score: { egen: 0, teto: 2 } },
+                    { text: "그렇다", score: { egen: 0, teto: 1 } },
+                    { text: "보통이다", score: { egen: 0, teto: 0 } },
+                    { text: "그렇지 않다", score: { egen: 1, teto: 0 } },
+                    { text: "전혀 그렇지 않다", score: { egen: 2, teto: 0 } }
+                ]
+            },
+            {
+                question: "야외 활동보다는 실내에서 조용한 취미를 선호한다.",
+                options: [
+                    { text: "매우 그렇다", score: { egen: 2, teto: 0 } },
+                    { text: "그렇다", score: { egen: 1, teto: 0 } },
+                    { text: "보통이다", score: { egen: 0, teto: 0 } },
+                    { text: "그렇지 않다", score: { egen: 0, teto: 1 } },
+                    { text: "전혀 그렇지 않다", score: { egen: 0, teto: 2 } }
+                ]
+            },
+            {
+                question: "갈등 상황에서 직접적으로 맞서기보다 피하거나 중재를 시도한다.",
+                options: [
+                    { text: "매우 그렇다", score: { egen: 2, teto: 0 } },
+                    { text: "그렇다", score: { egen: 1, teto: 0 } },
+                    { text: "보통이다", score: { egen: 0, teto: 0 } },
+                    { text: "그렇지 않다", score: { egen: 0, teto: 1 } },
+                    { text: "전혀 그렇지 않다", score: { egen: 0, teto: 2 } }
+                ]
+            },
+            {
+                question: "문제가 생기면 논리적 분석보다 직감에 의존한다.",
+                options: [
+                    { text: "매우 그렇다", score: { egen: 2, teto: 0 } },
+                    { text: "그렇다", score: { egen: 1, teto: 0 } },
+                    { text: "보통이다", score: { egen: 0, teto: 0 } },
+                    { text: "그렇지 않다", score: { egen: 0, teto: 1 } },
+                    { text: "전혀 그렇지 않다", score: { egen: 0, teto: 2 } }
+                ]
+            },
+            {
+                question: "연애할 때 기념일이나 특별한 날을 중요하게 생각한다.",
+                options: [
+                    { text: "매우 그렇다", score: { egen: 2, teto: 0 } },
+                    { text: "그렇다", score: { egen: 1, teto: 0 } },
+                    { text: "보통이다", score: { egen: 0, teto: 0 } },
+                    { text: "그렇지 않다", score: { egen: 0, teto: 1 } },
+                    { text: "전혀 그렇지 않다", score: { egen: 0, teto: 2 } }
+                ]
+            },
+            {
+                question: "연애에서 이벤트나 서프라이즈를 계획하고 실행하는 편이다.",
+                options: [
+                    { text: "매우 그렇다", score: { egen: 0, teto: 2 } },
+                    { text: "그렇다", score: { egen: 0, teto: 1 } },
+                    { text: "보통이다", score: { egen: 0, teto: 0 } },
+                    { text: "그렇지 않다", score: { egen: 1, teto: 0 } },
+                    { text: "전혀 그렇지 않다", score: { egen: 2, teto: 0 } }
+                ]
+            },
+            {
+                question: "그룹에서 자연스럽게 리더 역할을 맡게 되는 편이다.",
+                options: [
+                    { text: "매우 그렇다", score: { egen: 0, teto: 2 } },
+                    { text: "그렇다", score: { egen: 0, teto: 1 } },
+                    { text: "보통이다", score: { egen: 0, teto: 0 } },
+                    { text: "그렇지 않다", score: { egen: 1, teto: 0 } },
+                    { text: "전혀 그렇지 않다", score: { egen: 2, teto: 0 } }
+                ]
+            },
+            {
+                question: "목표를 세우면 끝까지 추진하는 의지가 강하다.",
+                options: [
+                    { text: "매우 그렇다", score: { egen: 0, teto: 2 } },
+                    { text: "그렇다", score: { egen: 0, teto: 1 } },
+                    { text: "보통이다", score: { egen: 0, teto: 0 } },
+                    { text: "그렇지 않다", score: { egen: 1, teto: 0 } },
+                    { text: "전혀 그렇지 않다", score: { egen: 2, teto: 0 } }
+                ]
+            },
+            {
+                question: "친구들 간의 갈등을 중재하고 화해시키는 역할을 자주 한다.",
+                options: [
+                    { text: "매우 그렇다", score: { egen: 2, teto: 0 } },
+                    { text: "그렇다", score: { egen: 1, teto: 0 } },
+                    { text: "보통이다", score: { egen: 0, teto: 0 } },
+                    { text: "그렇지 않다", score: { egen: 0, teto: 1 } },
+                    { text: "전혀 그렇지 않다", score: { egen: 0, teto: 2 } }
+                ]
+            },
+            {
+                question: "결정을 내릴 때 다른 사람의 의견보다 내 판단을 우선한다.",
+                options: [
+                    { text: "매우 그렇다", score: { egen: 0, teto: 2 } },
+                    { text: "그렇다", score: { egen: 0, teto: 1 } },
+                    { text: "보통이다", score: { egen: 0, teto: 0 } },
+                    { text: "그렇지 않다", score: { egen: 1, teto: 0 } },
+                    { text: "전혀 그렇지 않다", score: { egen: 2, teto: 0 } }
+                ]
+            },
+            {
+                question: "다른 사람의 감정과 입장을 이해하려고 먼저 노력한다.",
+                options: [
+                    { text: "매우 그렇다", score: { egen: 2, teto: 0 } },
+                    { text: "그렇다", score: { egen: 1, teto: 0 } },
+                    { text: "보통이다", score: { egen: 0, teto: 0 } },
+                    { text: "그렇지 않다", score: { egen: 0, teto: 1 } },
+                    { text: "전혀 그렇지 않다", score: { egen: 0, teto: 2 } }
+                ]
+            }
+        ];
+
+        let currentQuestion = 0;
+        let scores = { egen: 0, teto: 0 };
+        let selectedOption = null;
+
+        function startTest() {
+            document.getElementById('startScreen').style.display = 'none';
+            document.getElementById('testScreen').style.display = 'block';
+            document.getElementById('totalQ').textContent = questions.length;
+            showQuestion();
+        }
+
+        function showQuestion() {
+            const question = questions[currentQuestion];
+            document.getElementById('question').textContent = question.question;
+            document.getElementById('currentQ').textContent = currentQuestion + 1;
+            
+            const optionsContainer = document.getElementById('options');
+            optionsContainer.innerHTML = '';
+            
+            question.options.forEach((option, index) => {
+                const optionElement = document.createElement('div');
+                optionElement.className = 'option';
+                optionElement.textContent = option.text;
+                optionElement.onclick = () => selectOption(index);
+                optionsContainer.appendChild(optionElement);
+            });
+
+            updateProgress();
+            document.getElementById('nextButton').classList.remove('show');
+            selectedOption = null;
+        }
+
+        function selectOption(index) {
+            // 이전 선택 해제
+            document.querySelectorAll('.option').forEach(opt => opt.classList.remove('selected'));
+            
+            // 현재 선택 표시
+            document.querySelectorAll('.option')[index].classList.add('selected');
+            
+            selectedOption = index;
+            document.getElementById('nextButton').classList.add('show');
+        }
+
+        function nextQuestion() {
+            if (selectedOption === null) return;
+            
+            // 점수 계산
+            const question = questions[currentQuestion];
+            const selectedScore = question.options[selectedOption].score;
+            scores.egen += selectedScore.egen;
+            scores.teto += selectedScore.teto;
+            
+            currentQuestion++;
+            
+            if (currentQuestion < questions.length) {
+                showQuestion();
+            } else {
+                showResult();
+            }
+        }
+
+        function updateProgress() {
+            const progress = ((currentQuestion + 1) / questions.length) * 100;
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('progressPercent').textContent = Math.round(progress) + '%';
+        }
+
+        function showResult() {
+            document.getElementById('testScreen').style.display = 'none';
+            document.getElementById('resultScreen').style.display = 'block';
+            
+            const resultContainer = document.getElementById('resultContainer');
+            const isEgen = scores.egen > scores.teto;
+            
+            if (isEgen) {
+                resultContainer.classList.add('egen');
+                document.getElementById('resultTitle').textContent = '에겐 (에스트로겐형) 💕';
+                document.getElementById('resultSubtitle').textContent = '감성적이고 부드러운 매력의 소유자';
+                document.getElementById('resultDescription').textContent = 
+                    '당신은 감정 표현이 풍부하고 섬세한 감성을 가진 에겐형이네요! 타인의 감정을 잘 이해하고 공감하는 능력이 뛰어나며, 관계에서 따뜻하고 배려심 깊은 모습을 보입니다. 부드럽고 우아한 매력으로 사람들에게 안정감을 주는 타입입니다.';
+            } else if (scores.teto > scores.egen) {
+                resultContainer.classList.add('teto');
+                document.getElementById('resultTitle').textContent = '테토 (테스토스테론형) 💪';
+                document.getElementById('resultSubtitle').textContent = '강인하고 적극적인 리더십의 소유자';
+                document.getElementById('resultDescription').textContent = 
+                    '당신은 주도적이고 결단력 있는 테토형이네요! 목표 지향적이며 적극적인 성향으로 어려운 상황에서도 의연하게 대처합니다. 강인한 정신력과 추진력으로 주변 사람들에게 든든함을 주는 타입입니다.';
+            } else {
+                resultContainer.classList.add('egen');
+                document.getElementById('resultTitle').textContent = '균형형 ⚖️';
+                document.getElementById('resultSubtitle').textContent = '에겐과 테토의 균형잡힌 매력';
+                document.getElementById('resultDescription').textContent = 
+                    '당신은 에겐과 테토의 특성을 균형있게 가지고 있는 타입이네요! 상황에 따라 부드러움과 강인함을 적절히 발휘할 수 있는 유연성을 가지고 있습니다.';
+            }
+            
+            document.getElementById('scoreDisplay').textContent = 
+                `에겐 점수: ${scores.egen}점 | 테토 점수: ${scores.teto}점`;
+        }
+
+        function restartTest() {
+            currentQuestion = 0;
+            scores = { egen: 0, teto: 0 };
+            selectedOption = null;
+            document.getElementById('resultScreen').style.display = 'none';
+            document.getElementById('startScreen').style.display = 'block';
+            document.getElementById('resultContainer').classList.remove('egen', 'teto');
+        }
+    </script>
+</body>
+</html>
