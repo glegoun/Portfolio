@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wordle!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            touch-action: manipulation; /* 모바일에서 더블 탭으로 확대되는 것을 방지 */
+        }
+        /* 타일이 뒤집히는 애니메이션 */
+        .tile-flip {
+            animation: flip 0.6s ease;
+        }
+        @keyframes flip {
+            0% {
+                transform: rotateX(0);
+            }
+            50% {
+                transform: rotateX(-90deg);
+            }
+            100% {
+                transform: rotateX(0);
+            }
+        }
+        /* 잘못된 추측 시 흔들리는 애니메이션 */
+        .shake {
+            animation: shake 0.5s;
+        }
+        @keyframes shake {
+            10%, 90% { transform: translateX(-1px); }
+            20%, 80% { transform: translateX(2px); }
+            30%, 50%, 70% { transform: translateX(-4px); }
+            40%, 60% { transform: translateX(4px); }
+        }
+        /* 타일 상태에 따른 색상 */
+        .tile.correct {
+            background-color: #4ade80; /* green-400 */
+            border-color: #4ade80;
+            color: white;
+        }
+        .tile.present {
+            background-color: #facc15; /* yellow-400 */
+            border-color: #facc15;
+            color: white;
+        }
+        .tile.absent {
+            background-color: #737373; /* neutral-500 */
+            border-color: #737373;
+            color: white;
+        }
+        .keyboard-key.correct {
+            background-color: #4ade80 !important;
+            color: white;
+        }
+        .keyboard-key.present {
+            background-color: #facc15 !important;
+            color: white;
+        }
+        .keyboard-key.absent {
+            background-color: #737373 !important;
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-neutral-800 text-white flex flex-col items-center justify-center min-h-screen p-4">
+
+    <div class="text-center mb-4">
+        <h1 class="text-4xl font-bold tracking-wider">워들 게임</h1>
+        <p class="text-neutral-400">5글자 영어 단어를 맞춰보세요.</p>
+    </div>
+
+    <!-- 게임 보드 -->
+    <div id="game-board" class="grid grid-cols-5 gap-2 mb-8">
+        <!-- 자바스크립트로 6x5 그리드 생성 -->
+    </div>
+
+    <!-- 가상 키보드 -->
+    <div id="keyboard" class="flex flex-col gap-2 w-full max-w-lg">
+        <!-- 자바스크립트로 키보드 생성 -->
+    </div>
+
+    <!-- 결과 메시지 모달 -->
+    <div id="modal" class="hidden fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center">
+        <div class="bg-neutral-700 p-8 rounded-lg text-center shadow-xl">
+            <h2 id="modal-title" class="text-3xl font-bold mb-4"></h2>
+            <p id="modal-answer" class="text-xl mb-6"></p>
+            <button id="play-again-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-lg transition-colors">
+                다시하기
+            </button>
+        </div>
+    </div>
+    
+    <!-- 알림 메시지 -->
+    <div id="notification" class="hidden fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-red-500 text-white py-4 px-8 rounded-lg text-lg font-bold shadow-2xl transition-opacity duration-300 z-50">
+        <!-- 메시지 내용이 여기에 들어갑니다 -->
+    </div>
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // --- DOM 요소 선택 ---
+        const gameBoard = document.getElementById('game-board');
+        const keyboardContainer = document.getElementById('keyboard');
+        const modal = document.getElementById('modal');
+        const modalTitle = document.getElementById('modal-title');
+        const modalAnswer = document.getElementById('modal-answer');
+        const playAgainBtn = document.getElementById('play-again-btn');
+        const notification = document.getElementById('notification');
+
+        // --- 게임 설정 ---
+        const WORD_LENGTH = 5;
+        const MAX_GUESSES = 6;
+        
+        // 5글자 영어 단어 목록
+        const wordList = [
+            "APPLE", "HOUSE", "TIGER", "WATER", "MONEY", "TABLE", "CHAIR", "MUSIC", 
+            "WORLD", "HEART", "BRAIN", "POWER", "GHOST", "PLANT", "FRUIT", "STONE", 
+            "TRAIN", "PLANE", "OCEAN", "RIVER", "BEACH", "LIGHT", "NIGHT", "EARTH", 
+            "SPACE", "CLOUD", "STORM", "WHITE", "BLACK", "GREEN", "BROWN", "PEACE", 
+            "DREAM", "SMILE", "LAUGH", "HAPPY", "QUIET", "VOICE", "SOUND", "VIDEO", 
+            "AUDIO", "RADIO", "PHONE", "EMAIL", "PIZZA", "BREAD", "SUGAR", "CREAM", 
+            "HONEY", "LEMON", "GRAPE", "MANGO", "ABOUT", "ABOVE", "AFTER", "AGAIN"
+        ];
+        
+        // --- 게임 상태 변수 ---
+        let answer = '';
+        let currentRow = 0;
+        let currentCol = 0;
+        let isGameOver = false;
+
+        // --- 게임 초기화 ---
+        function init() {
+            // 게임 상태 초기화
+            answer = wordList[Math.floor(Math.random() * wordList.length)];
+            console.log(`정답: ${answer}`); // 디버깅용 정답 출력
+            currentRow = 0;
+            currentCol = 0;
+            isGameOver = false;
+
+            // 게임 보드 생성 및 초기화
+            gameBoard.innerHTML = '';
+            for (let i = 0; i < MAX_GUESSES * WORD_LENGTH; i++) {
+                const tile = document.createElement('div');
+                tile.classList.add('tile', 'w-14', 'h-14', 'md:w-16', 'md:h-16', 'border-2', 'border-neutral-600', 'flex', 'items-center', 'justify-center', 'text-2xl', 'md:text-3xl', 'font-bold', 'uppercase', 'transition-all', 'duration-300');
+                gameBoard.appendChild(tile);
+            }
+
+            // 키보드 생성 및 초기화
+            createKeyboard();
+            
+            // 모달 숨기기
+            modal.classList.add('hidden');
+        }
+
+        // --- 가상 키보드 생성 ---
+        function createKeyboard() {
+            keyboardContainer.innerHTML = '';
+            const keysLayout = [
+                "QWERTYUIOP",
+                "ASDFGHJKL",
+                "ZXCVBNM"
+            ];
+            
+            keysLayout.forEach(row => {
+                const rowDiv = document.createElement('div');
+                rowDiv.classList.add('flex', 'justify-center', 'gap-1', 'md:gap-2');
+                row.split('').forEach(key => {
+                    const keyBtn = document.createElement('button');
+                    keyBtn.textContent = key;
+                    keyBtn.dataset.key = key;
+                    keyBtn.classList.add('keyboard-key', 'h-12', 'flex-1', 'rounded', 'bg-neutral-500', 'hover:bg-neutral-600', 'font-bold', 'uppercase', 'transition-colors');
+                    rowDiv.appendChild(keyBtn);
+                });
+                keyboardContainer.appendChild(rowDiv);
+            });
+
+            // Enter, Backspace 키 추가
+            const specialKeysRow = document.createElement('div');
+            specialKeysRow.classList.add('flex', 'justify-center', 'gap-1', 'md:gap-2');
+            
+            const enterBtn = document.createElement('button');
+            enterBtn.textContent = 'Enter';
+            enterBtn.dataset.key = 'Enter';
+            enterBtn.classList.add('keyboard-key', 'h-12', 'rounded', 'bg-neutral-500', 'hover:bg-neutral-600', 'font-bold', 'uppercase', 'transition-colors', 'px-4', 'md:px-6');
+            
+            const backspaceBtn = document.createElement('button');
+            backspaceBtn.innerHTML = '&#9003;'; // Backspace 아이콘
+            backspaceBtn.dataset.key = 'Backspace';
+            backspaceBtn.classList.add('keyboard-key', 'h-12', 'rounded', 'bg-neutral-500', 'hover:bg-neutral-600', 'font-bold', 'uppercase', 'transition-colors', 'px-4', 'md:px-6');
+
+            specialKeysRow.appendChild(enterBtn);
+            specialKeysRow.appendChild(backspaceBtn);
+            keyboardContainer.appendChild(specialKeysRow);
+        }
+
+        // --- 입력 처리 ---
+        function handleKeyPress(key) {
+            if (isGameOver) return;
+
+            const upperKey = key.toUpperCase();
+
+            if (upperKey === 'ENTER') {
+                submitGuess();
+            } else if (upperKey === 'BACKSPACE') {
+                deleteLetter();
+            } else if (upperKey.match(/^[A-Z]$/)) {
+                addLetter(upperKey);
+            }
+        }
+
+        // --- 글자 추가 ---
+        function addLetter(letter) {
+            if (currentCol < WORD_LENGTH) {
+                const tile = gameBoard.children[currentRow * WORD_LENGTH + currentCol];
+                tile.textContent = letter;
+                tile.classList.add('border-neutral-400');
+                currentCol++;
+            }
+        }
+
+        // --- 글자 삭제 ---
+        function deleteLetter() {
+            if (currentCol > 0) {
+                currentCol--;
+                const tile = gameBoard.children[currentRow * WORD_LENGTH + currentCol];
+                tile.textContent = '';
+                tile.classList.remove('border-neutral-400');
+            }
+        }
+
+        // --- 추측 제출 ---
+        function submitGuess() {
+            if (currentCol !== WORD_LENGTH) {
+                showNotification("글자 수가 부족합니다.");
+                const rowTiles = Array.from(gameBoard.children).slice(currentRow * WORD_LENGTH, (currentRow + 1) * WORD_LENGTH);
+                rowTiles.forEach(tile => {
+                    tile.classList.add('shake');
+                    setTimeout(() => tile.classList.remove('shake'), 500);
+                });
+                return;
+            }
+
+            const guess = Array.from({ length: WORD_LENGTH }).map((_, i) => {
+                return gameBoard.children[currentRow * WORD_LENGTH + i].textContent;
+            }).join('');
+            
+            // 사전에 있는 단어인지 확인
+            if (!wordList.includes(guess)) {
+                showNotification("사전에 없는 단어입니다.");
+                const rowTiles = Array.from(gameBoard.children).slice(currentRow * WORD_LENGTH, (currentRow + 1) * WORD_LENGTH);
+                rowTiles.forEach(tile => {
+                    tile.classList.add('shake');
+                    setTimeout(() => tile.classList.remove('shake'), 500);
+                });
+                return; // 추측을 제출하지 않음
+            }
+
+            checkGuess(guess);
+
+            if (!isGameOver) {
+                currentRow++;
+                currentCol = 0;
+                if (currentRow === MAX_GUESSES) {
+                    endGame(false); // 기회 소진으로 패배
+                }
+            }
+        }
+        
+        // --- 알림 메시지 표시 ---
+        function showNotification(message) {
+            notification.textContent = message;
+            notification.classList.remove('hidden');
+            notification.classList.add('opacity-100');
+            setTimeout(() => {
+                notification.classList.remove('opacity-100');
+                notification.classList.add('hidden');
+            }, 1500); // 1.5초 후 사라지도록 조정
+        }
+
+        // --- 추측 검사 및 UI 업데이트 ---
+        function checkGuess(guess) {
+            const answerLetters = answer.split('');
+            const guessLetters = guess.split('');
+            const letterCounts = {};
+
+            // 정답 단어의 알파벳 개수 세기 (중복 처리 위함)
+            answerLetters.forEach(letter => {
+                letterCounts[letter] = (letterCounts[letter] || 0) + 1;
+            });
+            
+            // 1. 'correct' 상태 먼저 확인
+            guessLetters.forEach((letter, index) => {
+                const tile = gameBoard.children[currentRow * WORD_LENGTH + index];
+                if (letter === answerLetters[index]) {
+                    tile.dataset.state = 'correct';
+                    letterCounts[letter]--;
+                }
+            });
+
+            // 2. 'present' 와 'absent' 상태 확인
+            guessLetters.forEach((letter, index) => {
+                const tile = gameBoard.children[currentRow * WORD_LENGTH + index];
+                if(tile.dataset.state) return; // 이미 'correct' 처리된 타일은 건너뜀
+
+                if (answerLetters.includes(letter) && letterCounts[letter] > 0) {
+                    tile.dataset.state = 'present';
+                    letterCounts[letter]--;
+                } else {
+                    tile.dataset.state = 'absent';
+                }
+            });
+
+            // 애니메이션과 함께 타일 및 키보드 색상 업데이트
+            for (let i = 0; i < WORD_LENGTH; i++) {
+                const tile = gameBoard.children[currentRow * WORD_LENGTH + i];
+                setTimeout(() => {
+                    tile.classList.add('tile-flip', tile.dataset.state);
+                    updateKeyboardColor(tile.textContent, tile.dataset.state);
+                }, i * 200); // 순차적으로 뒤집히는 효과
+            }
+            
+            if (guess === answer) {
+                setTimeout(() => endGame(true), WORD_LENGTH * 200); // 모든 타일이 뒤집힌 후 승리 처리
+            }
+        }
+        
+        // --- 키보드 색상 업데이트 ---
+        function updateKeyboardColor(key, state) {
+            const keyBtn = keyboardContainer.querySelector(`[data-key="${key}"]`);
+            if (!keyBtn) return;
+            
+            // 더 좋은 상태로만 업데이트 (absent -> present -> correct)
+            const currentState = keyBtn.classList.contains('correct') ? 'correct' :
+                                 keyBtn.classList.contains('present') ? 'present' : 'absent';
+
+            if (currentState === 'correct') return;
+            if (currentState === 'present' && state === 'absent') return;
+
+            keyBtn.classList.remove('present', 'absent', 'correct');
+            keyBtn.classList.add(state);
+        }
+
+        // --- 게임 종료 처리 ---
+        function endGame(isWin) {
+            isGameOver = true;
+            setTimeout(() => {
+                modal.classList.remove('hidden');
+                if (isWin) {
+                    modalTitle.textContent = "🎉 성공! 🎉";
+                } else {
+                    modalTitle.textContent = "아쉬워요...";
+                }
+                modalAnswer.textContent = `정답: ${answer}`;
+            }, 500);
+        }
+
+        // --- 이벤트 리스너 설정 ---
+        // 물리적 키보드 입력
+        document.addEventListener('keydown', e => handleKeyPress(e.key));
+        
+        // 가상 키보드 클릭
+        keyboardContainer.addEventListener('click', e => {
+            if (e.target.tagName === 'BUTTON') {
+                handleKeyPress(e.target.dataset.key);
+            }
+        });
+        
+        // 다시하기 버튼
+        playAgainBtn.addEventListener('click', init);
+
+        // --- 게임 시작 ---
+        init();
+    });
+</script>
+
+</body>
+</html>
+
